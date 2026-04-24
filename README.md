@@ -29,7 +29,7 @@ cp .env.docker.example .env.docker
 openssl rand -base64 48
 ```
 
-把生成的随机字符串填入 `.env.docker` 的 `AUTH_SECRET`，然后启动服务：
+把生成的随机字符串填入 `.env.docker` 的 `AUTH_SECRET`。如果直接用 `http://服务器IP:3000` 访问，保持 `AUTH_COOKIE_SECURE=false`；如果通过 HTTPS 域名反向代理访问，再改成 `AUTH_COOKIE_SECURE=true`。然后启动服务：
 
 ```bash
 docker compose --env-file .env.docker up -d --build
@@ -58,9 +58,11 @@ docker pull node:22-bookworm-slim
 若 `docker pull` 同样失败，请修复服务器 DNS/代理，或在 `.env.docker` 中指定可访问的 Node 镜像源：
 
 ```bash
-NODE_IMAGE=你的镜像源/library/node:22-bookworm-slim
+echo 'NODE_IMAGE=public.ecr.aws/docker/library/node:22-bookworm-slim' >> .env.docker
 docker compose --env-file .env.docker up -d --build
 ```
+
+如果该镜像源仍不可用，可把 `NODE_IMAGE` 换成服务器网络可访问的其他 Docker Official Images 镜像源，例如 `mirror.gcr.io/library/node:22-bookworm-slim`。关键是 `.env.docker` 里必须有未注释的 `NODE_IMAGE=...` 行，否则仍会默认访问 Docker Hub。
 
 ## 功能
 

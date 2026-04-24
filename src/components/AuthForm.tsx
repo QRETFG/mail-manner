@@ -37,9 +37,9 @@ export default function AuthForm({ mode }: { mode: "login" | "register" }) {
         <h1>{isRegister ? "创建账号" : "欢迎回来"}</h1>
         <p>{isRegister ? "注册后开始收藏和整理邮箱地址。" : "登录邮箱收藏管理系统。"}</p>
         <form className="form" onSubmit={submit}>
-          {isRegister && <label className="field"><span>昵称</span><input className="input" name="name" placeholder="可选" /></label>}
-          <label className="field"><span>邮箱</span><input className="input" name="email" type="email" required /></label>
-          <label className="field"><span>密码</span><input className="input" name="password" type="password" minLength={isRegister ? 8 : 1} required /></label>
+          {isRegister && <label className="field"><span>昵称</span><input className="input" name="name" autoComplete="name" placeholder="可选" /></label>}
+          <label className="field"><span>邮箱</span><input className="input" name="email" type="email" autoComplete="email" required /></label>
+          <label className="field"><span>密码</span><input className="input" name="password" type="password" autoComplete={isRegister ? "new-password" : "current-password"} minLength={isRegister ? 8 : 1} required /></label>
           {error && <div className="error">{error}</div>}
           <button className="btn" disabled={loading}>{loading ? "处理中..." : isRegister ? "注册并进入" : "登录"}</button>
         </form>

@@ -4,6 +4,7 @@ import { prisma } from "./prisma";
 
 const cookieName = "mail_favorites_session";
 const secret = new TextEncoder().encode(process.env.AUTH_SECRET ?? "dev-secret-change-me");
+const secureCookie = process.env.AUTH_COOKIE_SECURE === "true" || (process.env.AUTH_COOKIE_SECURE !== "false" && process.env.NODE_ENV === "production");
 
 export type SessionUser = { id: string; email: string; name: string | null };
 
@@ -18,7 +19,7 @@ export async function createSession(userId: string) {
   cookieStore.set(cookieName, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookie,
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });

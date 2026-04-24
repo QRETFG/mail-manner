@@ -12,6 +12,7 @@ services:
       NODE_ENV: production
       PORT: 3000
       DATABASE_URL: file:/data/app.db
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
       AUTH_SECRET: ${AUTH_SECRET:?Please set AUTH_SECRET in .env.docker}
     volumes:
       - ./data:/data
