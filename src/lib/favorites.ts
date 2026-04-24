@@ -10,6 +10,23 @@ export type FavoriteImportRow = {
   isStarred?: string | boolean;
 };
 
+const csvHeaderMap: Record<string, keyof FavoriteImportRow> = {
+  email: "email",
+  邮箱: "email",
+  邮箱地址: "email",
+  displayname: "displayName",
+  name: "displayName",
+  显示名: "displayName",
+  名称: "displayName",
+  category: "category",
+  分类: "category",
+  note: "note",
+  备注: "note",
+  isstarred: "isStarred",
+  starred: "isStarred",
+  星标: "isStarred",
+};
+
 export const favoriteInclude = {
   category: true,
 } satisfies Prisma.EmailFavoriteInclude;
@@ -55,7 +72,7 @@ export async function importFavorites(userId: string, rows: FavoriteImportRow[])
 
   for (const [index, row] of rows.entries()) {
     const line = index + 2;
-    const email = normalizeEmail(row.email ?? "");
+    const email = normalizeEmail(cellToString(row.email));
     if (!email) {
       errors.push({ row: line, reason: "邮箱地址必填" });
       continue;
@@ -71,13 +88,13 @@ export async function importFavorites(userId: string, rows: FavoriteImportRow[])
       continue;
     }
 
-    const category = await getOrCreateCategory(userId, row.category);
+    const category = await getOrCreateCategory(userId, cellToString(row.category));
     await prisma.emailFavorite.create({
       data: {
         userId,
         email,
-        displayName: row.displayName?.trim() || null,
-        note: row.note || null,
+        displayName: cellToString(row.displayName) || null,
+        note: cellToString(row.note) || null,
         isStarred: parseBool(row.isStarred),
         categoryId: category?.id ?? null,
       },
@@ -89,15 +106,37 @@ export async function importFavorites(userId: string, rows: FavoriteImportRow[])
 }
 
 export function parseImportContent(content: string, type: "json" | "csv") {
+  if (!content.trim()) throw new Error("导入文件不能为空");
+
   if (type === "json") {
     const data = JSON.parse(content) as unknown;
     if (!Array.isArray(data)) throw new Error("JSON 必须是数组");
     return data as FavoriteImportRow[];
   }
 
-  const result = Papa.parse<FavoriteImportRow>(content, { header: true, skipEmptyLines: true });
+  const result = Papa.parse<FavoriteImportRow>(content, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (header) => csvHeaderMap[header.trim().replace(/^\uFEFF/, "").toLowerCase()] ?? header.trim(),
+  });
+  if (!result.meta.fields?.includes("email")) return parseHeaderlessCsv(content);
   if (result.errors.length) throw new Error(result.errors[0]?.message ?? "CSV 解析失败");
   return result.data;
+}
+
+function parseHeaderlessCsv(content: string): FavoriteImportRow[] {
+  const result = Papa.parse<unknown[]>(content, { header: false, skipEmptyLines: true });
+  const blockingError = result.errors.find((error) => error.code !== "UndetectableDelimiter");
+  if (blockingError) throw new Error(blockingError.message ?? "CSV 解析失败");
+  const rows = result.data
+    .map((row) => ({ email: cellToString(row[0]), displayName: cellToString(row[1]), category: cellToString(row[2]), note: cellToString(row[3]), isStarred: cellToString(row[4]) }))
+    .filter((row) => row.email);
+  if (!rows.length) throw new Error("CSV 缺少 email 表头，且未识别到邮箱地址列表");
+  return rows;
+}
+
+function cellToString(value: unknown) {
+  return value == null ? "" : String(value).trim();
 }
 
 export function favoritesToCsv(rows: ReturnType<typeof toFavoriteDto>[]) {
