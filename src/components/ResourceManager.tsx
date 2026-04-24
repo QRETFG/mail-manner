@@ -71,9 +71,9 @@ export default function ResourceManager({ title, endpoint, listKey, color }: Pro
             <tbody>
               {items.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.name}</td>
-                  {color && <td><span className="badge" style={{ background: item.color }}>{item.color}</span></td>}
-                  <td className="actions"><button className="btn small secondary" onClick={() => setEditing(item)}>编辑</button><button className="btn small danger" onClick={() => remove(item.id)}>删除</button></td>
+                  <td data-label="名称">{item.name}</td>
+                  {color && <td data-label="颜色"><span className="badge" style={{ background: item.color }}>{item.color}</span></td>}
+                  <td data-label="操作" className="actions"><button className="btn small secondary" onClick={() => setEditing(item)}>编辑</button><button className="btn small danger" onClick={() => remove(item.id)}>删除</button></td>
                 </tr>
               ))}
               {!items.length && <tr><td colSpan={color ? 3 : 2} className="empty">暂无数据</td></tr>}

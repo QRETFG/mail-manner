@@ -3,14 +3,17 @@ import Papa from "papaparse";
 import { prisma } from "./prisma";
 
 export type FavoriteImportRow = {
-  email: string;
-  displayName?: string;
-  category?: string;
-  note?: string;
-  isStarred?: string | boolean;
+  email: unknown;
+  displayName?: unknown;
+  category?: unknown;
+  categoryName?: unknown;
+  分类?: unknown;
+  note?: unknown;
+  isStarred?: unknown;
+  [key: string]: unknown;
 };
 
-const csvHeaderMap: Record<string, keyof FavoriteImportRow> = {
+const csvHeaderMap: Record<string, string> = {
   email: "email",
   邮箱: "email",
   邮箱地址: "email",
@@ -88,7 +91,7 @@ export async function importFavorites(userId: string, rows: FavoriteImportRow[])
       continue;
     }
 
-    const category = await getOrCreateCategory(userId, cellToString(row.category));
+    const category = await getOrCreateCategory(userId, categoryToString(row));
     await prisma.emailFavorite.create({
       data: {
         userId,
@@ -137,6 +140,12 @@ function parseHeaderlessCsv(content: string): FavoriteImportRow[] {
 
 function cellToString(value: unknown) {
   return value == null ? "" : String(value).trim();
+}
+
+function categoryToString(row: FavoriteImportRow) {
+  const value = row.category ?? row.categoryName ?? row.分类;
+  if (value && typeof value === "object" && "name" in value) return cellToString(value.name);
+  return cellToString(value);
 }
 
 export function favoritesToCsv(rows: ReturnType<typeof toFavoriteDto>[]) {

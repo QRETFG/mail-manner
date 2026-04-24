@@ -34,7 +34,7 @@ export default async function DashboardPage() {
           <table>
             <thead><tr><th>邮箱地址</th><th>显示名</th><th>分类</th><th>更新时间</th></tr></thead>
             <tbody>
-              {recent.map((item) => <tr key={item.id}><td className="email-text">{item.email}</td><td>{item.displayName || "-"}</td><td>{item.category?.name || "未分类"}</td><td>{item.updatedAt.toLocaleString("zh-CN")}</td></tr>)}
+              {recent.map((item) => <tr key={item.id}><td data-label="邮箱地址" className="email-text">{item.email}</td><td data-label="显示名">{item.displayName || "-"}</td><td data-label="分类">{item.category?.name || "未分类"}</td><td data-label="更新时间">{item.updatedAt.toLocaleString("zh-CN")}</td></tr>)}
               {!recent.length && <tr><td colSpan={4} className="empty">还没有收藏，去邮箱收藏新增第一个邮箱地址。</td></tr>}
             </tbody>
           </table>

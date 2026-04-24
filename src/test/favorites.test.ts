@@ -39,6 +39,11 @@ describe("favorite helpers", () => {
     expect(rows[0].displayName).toBe(123);
   });
 
+  it("parses exported JSON category objects", () => {
+    const rows = parseImportContent(JSON.stringify([{ email: "a@example.com", category: { name: "Google", color: "#2563eb" } }]), "json");
+    expect(rows[0].category).toEqual({ name: "Google", color: "#2563eb" });
+  });
+
   it("parses boolean values", () => {
     expect(parseBool("yes")).toBe(true);
     expect(parseBool("否")).toBe(false);

@@ -100,12 +100,12 @@ export default function FavoritesClient({ categories }: { categories: Category[]
             <tbody>
               {favorites.map((favorite) => (
                 <tr key={favorite.id}>
-                  <td><input type="checkbox" checked={selected.includes(favorite.id)} onChange={(e) => setSelected(e.target.checked ? [...selected, favorite.id] : selected.filter((id) => id !== favorite.id))} /></td>
-                  <td><div className="email-cell"><span className="email-text">{favorite.isStarred ? "★ " : ""}{favorite.email}</span><CopyButton value={favorite.email} /></div><span className="muted email-text">{new Date(favorite.updatedAt).toLocaleString("zh-CN")}</span></td>
-                  <td>{favorite.displayName || "-"}</td>
-                  <td>{favorite.category ? <span className="badge" style={{ background: favorite.category.color }}>{favorite.category.name}</span> : "未分类"}</td>
-                  <td>{favorite.note || "-"}</td>
-                  <td className="actions"><Link className="btn small secondary" href={`/favorites/${favorite.id}`}>详情</Link><button className="btn small secondary" onClick={() => openEdit(favorite)}>编辑</button><button className="btn small danger" onClick={() => remove(favorite.id)}>删除</button></td>
+                  <td data-label="选择"><input type="checkbox" checked={selected.includes(favorite.id)} onChange={(e) => setSelected(e.target.checked ? [...selected, favorite.id] : selected.filter((id) => id !== favorite.id))} /></td>
+                  <td data-label="邮箱地址"><div className="email-cell"><span className="email-text">{favorite.isStarred ? "★ " : ""}{favorite.email}</span><CopyButton value={favorite.email} /></div><span className="muted email-text">{new Date(favorite.updatedAt).toLocaleString("zh-CN")}</span></td>
+                  <td data-label="显示名">{favorite.displayName || "-"}</td>
+                  <td data-label="分类">{favorite.category ? <span className="badge" style={{ background: favorite.category.color }}>{favorite.category.name}</span> : "未分类"}</td>
+                  <td data-label="备注">{favorite.note || "-"}</td>
+                  <td data-label="操作" className="actions"><Link className="btn small secondary" href={`/favorites/${favorite.id}`}>详情</Link><button className="btn small secondary" onClick={() => openEdit(favorite)}>编辑</button><button className="btn small danger" onClick={() => remove(favorite.id)}>删除</button></td>
                 </tr>
               ))}
               {!favorites.length && <tr><td colSpan={6} className="empty">没有匹配的邮箱收藏。</td></tr>}
