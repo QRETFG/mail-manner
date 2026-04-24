@@ -362,6 +362,13 @@ td.actions .btn { margin: 0 4px 4px 0; }
   td.actions::before { padding-top: 8px; }
   td.actions .btn { width: 100%; }
   td.actions > * { grid-column: 2; min-width: 0; }
+  .favorites-table tbody { gap: 9px; }
+  .favorites-table tbody tr { padding: 9px 10px; }
+  .favorites-table td { padding: 7px 0; gap: 8px; }
+  .favorites-table td:first-child { padding-top: 0; }
+  .favorites-table td:last-child { padding-bottom: 0; }
+  .favorites-table .email-cell { gap: 6px; }
+  .favorites-table .muted { font-size: 12px; }
   .email-cell { align-items: flex-start; }
   .email-cell .btn { width: auto; min-height: 34px; }
   .modal-backdrop { padding: 14px 10px 24px; align-items: start; }

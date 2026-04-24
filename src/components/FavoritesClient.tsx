@@ -95,7 +95,7 @@ export default function FavoritesClient({ categories }: { categories: Category[]
           <button className="btn small danger" onClick={() => bulk("delete")}>批量删除</button>
         </div>
         <div className="table-wrap">
-          <table>
+          <table className="favorites-table">
             <thead><tr><th><input type="checkbox" checked={allSelected} onChange={(e) => setSelected(e.target.checked ? favorites.map((f) => f.id) : [])} /></th><th>邮箱地址</th><th>显示名</th><th>分类</th><th>备注</th><th>操作</th></tr></thead>
             <tbody>
               {favorites.map((favorite) => (
