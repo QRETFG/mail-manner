@@ -1,0 +1,20 @@
+services:
+  mail-favorites-manager:
+    build: .
+    container_name: mail-favorites-manager
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: file:/data/app.db
+      AUTH_SECRET: ${AUTH_SECRET:?Please set AUTH_SECRET in .env.docker}
+    volumes:
+      - ./data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  favorites    EmailFavorite[]
+  categories   Category[]
+}
+
+model EmailFavorite {
+  id          String    @id @default(cuid())
+  userId      String
+  email       String
+  displayName String?
+  note        String?
+  isStarred   Boolean   @default(false)
+  categoryId  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, email])
+  @@index([userId, updatedAt])
+  @@index([userId, isStarred])
+  @@index([categoryId])
+}
+
+model Category {
+  id        String          @id @default(cuid())
+  userId    String
+  name      String
+  color     String          @default("#2563eb")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  favorites EmailFavorite[]
+
+  @@unique([userId, name])
+}
