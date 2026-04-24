@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import CopyButton from "@/components/CopyButton";
 import { getSessionUser } from "@/lib/auth";
@@ -8,15 +8,16 @@ import { prisma } from "@/lib/prisma";
 
 export default async function FavoriteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUser();
+  if (!user) redirect("/login");
   const { id } = await params;
-  const favorite = await prisma.emailFavorite.findFirst({ where: { id, userId: user!.id }, include: favoriteInclude });
+  const favorite = await prisma.emailFavorite.findFirst({ where: { id, userId: user.id }, include: favoriteInclude });
   if (!favorite) notFound();
 
   return (
     <AppShell title="邮箱收藏详情" subtitle="查看邮箱地址、分类和备注信息。">
       <div className="card detail">
         <div className="actions"><Link className="btn secondary" href="/favorites">返回列表</Link></div>
-        <div className="title-row"><h2>{favorite.isStarred ? "★ " : ""}{favorite.email}</h2><CopyButton value={favorite.email} label="复制邮箱" /></div>
+        <div className="title-row"><h2 className="email-text">{favorite.isStarred ? "★ " : ""}{favorite.email}</h2><CopyButton value={favorite.email} label="复制邮箱" /></div>
         <div className="grid cols-4">
           <div><strong>显示名</strong><p className="muted">{favorite.displayName || "-"}</p></div>
           <div><strong>分类</strong><p className="muted">{favorite.category?.name || "未分类"}</p></div>

@@ -101,7 +101,7 @@ export default function FavoritesClient({ categories }: { categories: Category[]
               {favorites.map((favorite) => (
                 <tr key={favorite.id}>
                   <td><input type="checkbox" checked={selected.includes(favorite.id)} onChange={(e) => setSelected(e.target.checked ? [...selected, favorite.id] : selected.filter((id) => id !== favorite.id))} /></td>
-                  <td><div className="email-cell"><strong>{favorite.isStarred ? "★ " : ""}{favorite.email}</strong><CopyButton value={favorite.email} /></div><span className="muted">{new Date(favorite.updatedAt).toLocaleString("zh-CN")}</span></td>
+                  <td><div className="email-cell"><span className="email-text">{favorite.isStarred ? "★ " : ""}{favorite.email}</span><CopyButton value={favorite.email} /></div><span className="muted email-text">{new Date(favorite.updatedAt).toLocaleString("zh-CN")}</span></td>
                   <td>{favorite.displayName || "-"}</td>
                   <td>{favorite.category ? <span className="badge" style={{ background: favorite.category.color }}>{favorite.category.name}</span> : "未分类"}</td>
                   <td>{favorite.note || "-"}</td>
