@@ -47,6 +47,21 @@ docker compose --env-file .env.docker down
 
 如果服务器使用防火墙，请放行 `3000` 端口，或在 Nginx/Caddy 中反向代理到 `127.0.0.1:3000`。
 
+如果构建时报 `x509` 证书错误，且证书域名不是 Docker Hub，例如拿到 Facebook 证书，通常是服务器 DNS、代理或运营商网络劫持导致，并非项目 Dockerfile 问题。可先在服务器检查：
+
+```bash
+date
+curl -Iv https://registry-1.docker.io/v2/
+docker pull node:22-bookworm-slim
+```
+
+若 `docker pull` 同样失败，请修复服务器 DNS/代理，或在 `.env.docker` 中指定可访问的 Node 镜像源：
+
+```bash
+NODE_IMAGE=你的镜像源/library/node:22-bookworm-slim
+docker compose --env-file .env.docker up -d --build
+```
+
 ## 功能
 
 - 收藏邮箱地址，记录显示名、分类、备注和星标状态。

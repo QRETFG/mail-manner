@@ -1,6 +1,9 @@
 services:
   mail-favorites-manager:
-    build: .
+    build:
+      context: .
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-bookworm-slim}
     container_name: mail-favorites-manager
     restart: unless-stopped
     ports:

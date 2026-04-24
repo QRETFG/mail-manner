@@ -1,4 +1,5 @@
-FROM node:22-bookworm-slim AS base
+ARG NODE_IMAGE=node:22-bookworm-slim
+FROM ${NODE_IMAGE} AS base
 
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
