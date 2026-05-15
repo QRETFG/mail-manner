@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeEmail, parseBool, parseImportContent } from "@/lib/favorites";
+import { normalizeEmail, parseBool, parseEmailList, parseImportContent } from "@/lib/favorites";
 import { favoriteSchema } from "@/lib/validation";
 
 describe("favorite helpers", () => {
@@ -11,6 +11,25 @@ describe("favorite helpers", () => {
 
   it("normalizes email addresses", () => {
     expect(normalizeEmail("  User@Example.COM ")).toBe("user@example.com");
+  });
+
+  it("parses bulk email input with common separators", () => {
+    const result = parseEmailList("A@Example.com\nb@example.com, c@example.com;d@example.com e@example.com");
+    expect(result.emails).toEqual(["a@example.com", "b@example.com", "c@example.com", "d@example.com", "e@example.com"]);
+    expect(result.invalid).toEqual([]);
+    expect(result.total).toBe(5);
+  });
+
+  it("dedupes normalized bulk email input", () => {
+    const result = parseEmailList(["User@Example.com", " user@example.com, other@example.com "]);
+    expect(result.emails).toEqual(["user@example.com", "other@example.com"]);
+    expect(result.duplicates).toBe(1);
+  });
+
+  it("reports invalid bulk email values", () => {
+    const result = parseEmailList("valid@example.com not-email missing@domain");
+    expect(result.emails).toEqual(["valid@example.com"]);
+    expect(result.invalid).toEqual(["not-email", "missing@domain"]);
   });
 
   it("parses import CSV", () => {

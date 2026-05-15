@@ -11,13 +11,23 @@ export const loginSchema = z.object({
   password: z.string().min(1, "请输入密码"),
 });
 
-export const favoriteSchema = z.object({
-  email: z.string().trim().email("请输入有效邮箱地址"),
+const favoriteFields = {
   displayName: z.string().trim().max(120).optional().nullable(),
   note: z.string().optional().nullable(),
   isStarred: z.boolean().optional(),
   categoryId: z.string().optional().nullable().or(z.literal("")),
+};
+
+export const favoriteSchema = z.object({
+  email: z.string().trim().email("请输入有效邮箱地址"),
+  ...favoriteFields,
 });
+
+export const favoriteCreateSchema = z.object({
+  email: z.string().trim().optional().nullable(),
+  emails: z.union([z.string(), z.array(z.string())]).optional(),
+  ...favoriteFields,
+}).refine((data) => Boolean(data.email || data.emails), { message: "请输入有效邮箱地址", path: ["email"] });
 
 export const categorySchema = z.object({
   name: z.string().trim().min(1, "分类名必填").max(60),

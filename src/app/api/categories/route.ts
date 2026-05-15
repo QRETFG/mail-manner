@@ -6,8 +6,14 @@ import { categorySchema } from "@/lib/validation";
 export async function GET() {
   try {
     const user = await requireUser();
-    const categories = await prisma.category.findMany({ where: { userId: user.id }, orderBy: { name: "asc" } });
-    return json({ categories });
+    const categories = await prisma.category.findMany({
+      where: { userId: user.id },
+      orderBy: { name: "asc" },
+      include: { _count: { select: { favorites: true } } },
+    });
+    return json({
+      categories: categories.map(({ _count, ...category }) => ({ ...category, favoriteCount: _count.favorites })),
+    });
   } catch (error) {
     return errorResponse(error);
   }

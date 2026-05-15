@@ -34,8 +34,48 @@ export const favoriteInclude = {
   category: true,
 } satisfies Prisma.EmailFavoriteInclude;
 
+const emailSeparators = /[\s,;，；]+/u;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
+}
+
+export function isValidEmailAddress(email: string) {
+  return emailPattern.test(email);
+}
+
+export function parseEmailList(input: string | string[]) {
+  const rawParts = Array.isArray(input) ? input : [input];
+  const seen = new Set<string>();
+  const emails: string[] = [];
+  const invalid: string[] = [];
+  let duplicates = 0;
+  let total = 0;
+
+  for (const rawPart of rawParts) {
+    for (const rawValue of String(rawPart).split(emailSeparators)) {
+      const value = rawValue.trim();
+      if (!value) continue;
+      total += 1;
+
+      const email = normalizeEmail(value);
+      if (!isValidEmailAddress(email)) {
+        invalid.push(value);
+        continue;
+      }
+
+      if (seen.has(email)) {
+        duplicates += 1;
+        continue;
+      }
+
+      seen.add(email);
+      emails.push(email);
+    }
+  }
+
+  return { emails, invalid, duplicates, total };
 }
 
 export function parseBool(value: unknown) {
@@ -80,7 +120,7 @@ export async function importFavorites(userId: string, rows: FavoriteImportRow[])
       errors.push({ row: line, reason: "邮箱地址必填" });
       continue;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!isValidEmailAddress(email)) {
       errors.push({ row: line, reason: "邮箱地址格式不正确" });
       continue;
     }

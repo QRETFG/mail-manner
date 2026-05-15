@@ -17,23 +17,56 @@ type Favorite = {
 };
 
 type Draft = Partial<Favorite>;
+type Filters = { q: string; categoryId: string; starred: string };
+type Pagination = { page: number; pageSize: number; total: number; totalPages: number };
+type SaveResult = { created?: number; skipped?: number; errors?: { email: string; reason: string }[]; error?: string };
+type FavoritesResponse = { favorites?: Favorite[]; pagination?: Pagination; error?: string };
 
 const emptyDraft: Draft = { email: "", displayName: "", note: "", categoryId: "", isStarred: false };
+const emptyFilters: Filters = { q: "", categoryId: "", starred: "" };
+const defaultPagination: Pagination = { page: 1, pageSize: 10, total: 0, totalPages: 1 };
+
+function formatSaveNotice(data: SaveResult, isEdit: boolean) {
+  if (isEdit) return "已保存邮箱收藏";
+  if (typeof data.created !== "number") return "已新增邮箱收藏";
+
+  const parts = [`已新增 ${data.created} 个邮箱`];
+  if (data.skipped) parts.push(`跳过 ${data.skipped} 个已存在或重复邮箱`);
+  if (data.errors?.length) parts.push(`${data.errors.length} 个邮箱格式无效`);
+  return parts.join("，");
+}
 
 export default function FavoritesClient({ categories }: { categories: Category[] }) {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [draft, setDraft] = useState<Draft | null>(null);
-  const [filters, setFilters] = useState({ q: "", categoryId: "", starred: "" });
+  const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<Pagination>(defaultPagination);
   const [error, setError] = useState("");
+  const [listError, setListError] = useState("");
+  const [notice, setNotice] = useState("");
   const allSelected = favorites.length > 0 && selected.length === favorites.length;
 
-  const query = useMemo(() => new URLSearchParams(Object.entries(filters).filter(([, value]) => value)).toString(), [filters]);
+  const query = useMemo(() => {
+    const params = new URLSearchParams(Object.entries(filters).filter(([, value]) => value));
+    params.set("page", String(page));
+    return params.toString();
+  }, [filters, page]);
 
   async function load() {
     const response = await fetch(`/api/favorites?${query}`);
-    const data = await response.json();
+    const data = await response.json().catch(() => ({})) as FavoritesResponse;
+    if (!response.ok) {
+      setListError(data.error ?? "加载失败");
+      return;
+    }
+
+    setListError("");
     setFavorites(data.favorites ?? []);
+    const nextPagination = data.pagination ?? defaultPagination;
+    setPagination(nextPagination);
+    if (nextPagination.page !== page) setPage(nextPagination.page);
     setSelected([]);
   }
 
@@ -41,6 +74,7 @@ export default function FavoritesClient({ categories }: { categories: Category[]
 
   function openEdit(favorite?: Favorite) {
     setError("");
+    setNotice("");
     setDraft(favorite ? { ...favorite } : emptyDraft);
   }
 
@@ -53,12 +87,19 @@ export default function FavoritesClient({ categories }: { categories: Category[]
       headers: { "content-type": "application/json" },
       body: JSON.stringify(draft),
     });
-    const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({})) as SaveResult;
     if (!response.ok) {
-      setError(data.error ?? "保存失败");
+      const invalidCount = data.errors?.length;
+      setError(data.error ?? (invalidCount ? `${invalidCount} 个邮箱格式无效` : "保存失败"));
       return;
     }
+    const shouldReturnFirstPage = !draft.id;
+    setNotice(formatSaveNotice(data, Boolean(draft.id)));
     setDraft(null);
+    if (shouldReturnFirstPage && page !== 1) {
+      setPage(1);
+      return;
+    }
     await load();
   }
 
@@ -75,6 +116,11 @@ export default function FavoritesClient({ categories }: { categories: Category[]
     await load();
   }
 
+  function setFilter<K extends keyof Filters>(key: K, value: Filters[K]) {
+    setFilters((current) => ({ ...current, [key]: value }));
+    setPage(1);
+  }
+
   function setField<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((current) => current ? { ...current, [key]: value } : current);
   }
@@ -83,11 +129,13 @@ export default function FavoritesClient({ categories }: { categories: Category[]
     <div className="grid">
       <div className="card">
         <div className="toolbar">
-          <label className="field"><span>关键词</span><input className="input" value={filters.q} onChange={(e) => setFilters({ ...filters, q: e.target.value })} placeholder="邮箱/名称/备注" /></label>
-          <label className="field"><span>分类</span><select className="select" value={filters.categoryId} onChange={(e) => setFilters({ ...filters, categoryId: e.target.value })}><option value="">全部</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-          <label className="field"><span>星标</span><select className="select" value={filters.starred} onChange={(e) => setFilters({ ...filters, starred: e.target.value })}><option value="">全部</option><option value="true">仅星标</option></select></label>
+          <label className="field"><span>关键词</span><input className="input" value={filters.q} onChange={(e) => setFilter("q", e.target.value)} placeholder="邮箱/名称/备注" /></label>
+          <label className="field"><span>分类</span><select className="select" value={filters.categoryId} onChange={(e) => setFilter("categoryId", e.target.value)}><option value="">全部</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+          <label className="field"><span>星标</span><select className="select" value={filters.starred} onChange={(e) => setFilter("starred", e.target.value)}><option value="">全部</option><option value="true">仅星标</option></select></label>
           <button className="btn" onClick={() => openEdit()}>新增邮箱</button>
         </div>
+        {notice && <div className="success list-message">{notice}</div>}
+        {listError && <div className="error list-message">{listError}</div>}
         <div className="actions" style={{ marginBottom: 12 }}>
           <button className="btn small secondary" onClick={() => bulk("star")}>批量星标</button>
           <button className="btn small secondary" onClick={() => bulk("unstar")}>取消星标</button>
@@ -112,6 +160,14 @@ export default function FavoritesClient({ categories }: { categories: Category[]
             </tbody>
           </table>
         </div>
+        <div className="pagination">
+          <span>共 {pagination.total} 个邮箱，每页 {pagination.pageSize} 个</span>
+          <div className="pagination-controls">
+            <button className="btn small secondary" onClick={() => setPage(Math.max(1, pagination.page - 1))} disabled={pagination.page <= 1}>上一页</button>
+            <span className="page-indicator">第 {pagination.page} / {pagination.totalPages} 页</span>
+            <button className="btn small secondary" onClick={() => setPage(Math.min(pagination.totalPages, pagination.page + 1))} disabled={pagination.page >= pagination.totalPages}>下一页</button>
+          </div>
+        </div>
       </div>
 
       {draft && (
@@ -120,7 +176,11 @@ export default function FavoritesClient({ categories }: { categories: Category[]
             <div className="modal-head"><h2>{draft.id ? "编辑邮箱收藏" : "新增邮箱收藏"}</h2><button className="btn secondary" onClick={() => setDraft(null)}>关闭</button></div>
             <form className="form" onSubmit={submit}>
               <div className="form-grid">
-                <label className="field full"><span>邮箱地址 *</span><input className="input" type="email" value={draft.email ?? ""} onChange={(e) => setField("email", e.target.value)} required /></label>
+                {draft.id ? (
+                  <label className="field full"><span>邮箱地址 *</span><input className="input" type="email" value={draft.email ?? ""} onChange={(e) => setField("email", e.target.value)} required /></label>
+                ) : (
+                  <label className="field full"><span>邮箱地址 *</span><textarea className="textarea email-bulk-input" value={draft.email ?? ""} onChange={(e) => setField("email", e.target.value)} placeholder={"a@example.com\nb@example.com\nc@example.com"} required /></label>
+                )}
                 <label className="field"><span>显示名</span><input className="input" value={draft.displayName ?? ""} onChange={(e) => setField("displayName", e.target.value)} placeholder="例如：工作 Gmail" /></label>
                 <label className="field"><span>分类</span><select className="select" value={draft.categoryId ?? ""} onChange={(e) => setField("categoryId", e.target.value)}><option value="">未分类</option>{categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
                 <label className="field full"><span>备注</span><textarea className="textarea" value={draft.note ?? ""} onChange={(e) => setField("note", e.target.value)} placeholder="用途、登录平台或其他说明" /></label>

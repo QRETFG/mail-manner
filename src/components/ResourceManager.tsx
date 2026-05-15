@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-type Item = { id: string; name: string; color?: string };
+type Item = { id: string; name: string; color?: string; favoriteCount?: number };
 
 type Props = {
   title: string;
@@ -15,6 +15,8 @@ export default function ResourceManager({ title, endpoint, listKey, color }: Pro
   const [items, setItems] = useState<Item[]>([]);
   const [editing, setEditing] = useState<Item | null>(null);
   const [error, setError] = useState("");
+  const showFavoriteCount = endpoint === "/api/categories";
+  const columnCount = 2 + (color ? 1 : 0) + (showFavoriteCount ? 1 : 0);
 
   async function load() {
     const response = await fetch(endpoint);
@@ -67,16 +69,17 @@ export default function ResourceManager({ title, endpoint, listKey, color }: Pro
         <h2>{title}列表</h2>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>名称</th>{color && <th>颜色</th>}<th>操作</th></tr></thead>
+            <thead><tr><th>名称</th>{color && <th>颜色</th>}{showFavoriteCount && <th>邮箱数量</th>}<th>操作</th></tr></thead>
             <tbody>
               {items.map((item) => (
                 <tr key={item.id}>
                   <td data-label="名称">{item.name}</td>
                   {color && <td data-label="颜色"><span className="badge" style={{ background: item.color }}>{item.color}</span></td>}
+                  {showFavoriteCount && <td data-label="邮箱数量"><span className="badge gray">{item.favoriteCount ?? 0}</span></td>}
                   <td data-label="操作" className="actions"><button className="btn small secondary" onClick={() => setEditing(item)}>编辑</button><button className="btn small danger" onClick={() => remove(item.id)}>删除</button></td>
                 </tr>
               ))}
-              {!items.length && <tr><td colSpan={color ? 3 : 2} className="empty">暂无数据</td></tr>}
+              {!items.length && <tr><td colSpan={columnCount} className="empty">暂无数据</td></tr>}
             </tbody>
           </table>
         </div>
